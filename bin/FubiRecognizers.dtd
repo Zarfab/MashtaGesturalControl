@@ -1,0 +1,111 @@
+<!ELEMENT FubiRecognizers (JointRelationRecognizer|JointOrientationRecognizer|LinearMovementRecognizer|FingerCountRecognizer|CombinationRecognizer)+>
+  <!ATTLIST FubiRecognizers
+    globalMinConfidence CDATA #IMPLIED>
+
+<!ENTITY % joints "(head | neck | torso | waist |	leftShoulder | leftElbow | leftWrist | leftHand | rightShoulder |	rightElbow | rightWrist | rightHand |	leftHip |	leftKnee |	leftAnkle |	leftFoot | rightHip | rightKnee | rightAnkle | rightFoot)">
+<!ENTITY % measures "(millimeter | bodyHeight | torsoHeight | shoulderWidth | hipWidth | armLength | upperArmLength | lowerArmLength | legLength | upperLegLength | lowerLegLength)">
+
+<!ELEMENT JointRelationRecognizer (Joints, (((MaxValues, MinValues?)|(MinValues, MaxValues?))|Relation+), METAINFO?)>
+  <!ATTLIST JointRelationRecognizer
+    name ID #REQUIRED
+    visibility (visible|hidden) 'visible'
+    useLocalPositions (true|false) 'false'
+    minConfidence CDATA #IMPLIED
+    measuringUnit %measures; 'millimeter'>
+  <!ELEMENT Joints EMPTY>
+  <!ATTLIST Joints
+    main %joints; #REQUIRED
+    relative %joints; #IMPLIED>
+  <!ELEMENT MaxValues EMPTY>
+  <!ATTLIST MaxValues
+    x CDATA #IMPLIED
+    y CDATA #IMPLIED
+    z CDATA #IMPLIED
+    dist CDATA #IMPLIED>
+  <!ELEMENT MinValues EMPTY>
+  <!ATTLIST MinValues
+    x CDATA #IMPLIED
+    y CDATA #IMPLIED
+    z CDATA #IMPLIED
+    dist CDATA #IMPLIED>
+  <!ELEMENT Relation EMPTY>
+  <!ATTLIST Relation
+    type (inFrontOf|behind|leftOf|rightOf|above|below|apartOf) #REQUIRED
+    min CDATA '0'
+    max CDATA #IMPLIED>
+
+<!ELEMENT JointOrientationRecognizer (Joint, ((MaxDegrees, MinDegrees?)|(MinDegrees, MaxDegrees?)), METAINFO?)>
+  <!ATTLIST JointOrientationRecognizer
+    name ID #REQUIRED
+    visibility (visible|hidden) 'visible'
+    useLocalOrientations (true|false) 'true'
+    minConfidence CDATA #IMPLIED>
+  <!ELEMENT Joint EMPTY>
+    <!ATTLIST Joint name %joints; #REQUIRED>
+  <!ELEMENT MaxDegrees EMPTY>
+    <!ATTLIST MaxDegrees
+      x CDATA #IMPLIED
+      y CDATA #IMPLIED
+      z CDATA #IMPLIED>
+  <!ELEMENT MinDegrees EMPTY>
+    <!ATTLIST MinDegrees 
+      x CDATA #IMPLIED
+      y CDATA #IMPLIED
+      z CDATA #IMPLIED>
+
+<!ELEMENT LinearMovementRecognizer (Joints, (Direction|BasicDirection)?, Speed, METAINFO?)>
+  <!ATTLIST LinearMovementRecognizer
+    name ID #REQUIRED
+    visibility (visible|hidden) 'visible'
+    useLocalPositions (true|false) 'false'
+    minConfidence CDATA #IMPLIED
+    useOnlyCorrectDirectionComponent (true|false) 'true'>
+  <!ELEMENT Direction EMPTY>
+    <!ATTLIST Direction
+      x CDATA #REQUIRED
+      y CDATA #REQUIRED
+      z CDATA #REQUIRED
+      maxAngleDifference CDATA '45.0'>
+<!ELEMENT BasicDirection EMPTY>
+ <!ATTLIST BasicDirection
+      type (left|right|up|down|forward|backward|anyDirection) #REQUIRED
+      maxAngleDifference CDATA '45.0'>
+  <!ELEMENT Speed EMPTY>
+    <!ATTLIST Speed
+      min CDATA #IMPLIED
+      max CDATA #IMPLIED>
+
+<!ELEMENT FingerCountRecognizer (Joint, FingerCount, METAINFO?)>
+  <!ATTLIST FingerCountRecognizer
+    name ID #REQUIRED
+    visibility (visible|hidden) 'visible'
+    minConfidence CDATA #IMPLIED>
+  <!ELEMENT FingerCount EMPTY>
+    <!ATTLIST FingerCount
+      min (0|1|2|3|4|5) '0'
+      max (0|1|2|3|4|5) '5'
+      useMedianCalculation (true|false) 'false'>
+    
+<!ELEMENT CombinationRecognizer ((State)+, METAINFO?)>
+  <!ATTLIST CombinationRecognizer name ID #REQUIRED
+    waitUntilLastStateRecognizersStop (true|false) 'false'>
+  <!ELEMENT State ((Recognizer|NotRecognizer)+, AlternativeRecognizers?)>
+    <!ATTLIST State
+      minDuration CDATA '0'
+      maxDuration CDATA '-1'
+      timeForTransition CDATA '1'
+      maxInterruptionTime CDATA #IMPLIED
+      noInterrruptionBeforeMinDuration (true|false) 'false'>
+    <!ELEMENT Recognizer EMPTY>
+      <!ATTLIST Recognizer 
+        name CDATA #REQUIRED
+        minConfidence CDATA #IMPLIED
+        ignoreOnTrackingError (true|false) 'false'>
+    <!ELEMENT NotRecognizer EMPTY>
+    <!ATTLIST NotRecognizer 
+        name CDATA #REQUIRED
+        minConfidence CDATA #IMPLIED
+        ignoreOnTrackingError (true|false) 'true'>
+    <!ELEMENT AlternativeRecognizers (Recognizer|NotRecognizer)+>
+
+<!ELEMENT METAINFO EMPTY>
