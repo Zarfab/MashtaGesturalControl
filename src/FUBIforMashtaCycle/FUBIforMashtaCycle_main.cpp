@@ -17,8 +17,8 @@
 #include <GL/glut.h>
 #endif
 
-#include <FubiCore.h>
-#include <FubiUtils.h>
+#include "../Fubi/FubiCore.h"
+#include "../FubiUtils.h"
 
 #if defined ( WIN32 ) || defined( _WINDOWS )
 #include <Windows.h>
@@ -61,7 +61,7 @@ bool g_exitNextFrame = false;
 bool trackingStates[16];
 const int nbUsersTracked = 4;
 
-std::string recognizersFile("MashtaCycleRecognizers.xml");
+std::string recognizersFile("MashtaCycleRecognizersNew.xml");
 
 /////////// OSC defines
 #define OSCPKT_OSTREAM_OUTPUT
@@ -76,55 +76,84 @@ double comboDisplayRefresh = 0.33; // seconds
 
 // Function called each frame for all tracked users
 void checkPostures(unsigned int userID)
-{	
-//
+{
+    //
 	//std::vector<Fubi::SkeletonJoint::Joint> joints;
 	FubiUser* user = Fubi::getUser(userID);
 	oscpkt::PacketWriter pw;
-
+    bool recognized = false;
+    
 	for (unsigned int i= 0; i < getNumUserDefinedCombinationRecognizers(); ++i)
 	{
         if (getCombinationRecognitionProgressOn(getUserDefinedCombinationRecognizerName(i), userID) == Fubi::RecognitionResult::RECOGNIZED)
 		{
+            //if a combination is recognized, send OSC message according to the mapping
+            recognized = true;
 			comboName = getUserDefinedCombinationRecognizerName(i);
             comboStart = Fubi::getCurrentTime();
-
+            
             FubiCore* core = FubiCore::getInstance();
             if (core)
                 core->setCurrentGesture(comboName,userID);
-
-			MessageToSend msg = mapping->getOSCMessage(user, comboName);
-			if(msg.text != "")
+            
+            std::vector<MessageToSend> msg = mapping->getOSCMessage(user, comboName);
+			for(unsigned int i=0; i<msg.size(); i++)
 			{
-				oscpkt::Message combiMsg;
-				combiMsg.init(msg.text);
-			
-				int nb = 0;
-				for(unsigned int i=0; i<msg.values.size(); i++)
+                oscpkt::Message combiMsg;
+				combiMsg.init(msg[i].text);
+                
+				for(unsigned int j=0; j<msg[i].values.size(); j++)
 				{
-					combiMsg.pushFloat(msg.values[i]);
-					nb++;
+					combiMsg.pushFloat(msg[i].values[j]);
 				}
 				pw.startBundle().addMessage(combiMsg).endBundle();
 				sock.sendPacket(pw.packetData(), pw.packetSize());
 				combiMsg.clear();
 				if(displayOSCMessages)
 				{
-					std::cout << "sendind OSC message: \"" << msg.text;
-					for(unsigned int i=0; i<msg.values.size(); i++)
-						std::cout << " " << msg.values[i];
+					std::cout << "sendind OSC message: \"" << msg[i].text;
+					for(unsigned int j=0; j<msg[i].values.size(); j++)
+						std::cout << " " << msg[i].values[j];
+                    //std::cout << " " << comboStart;
 					std::cout << std::endl;
 				}
 			}
 		}
-
+        
         if(Fubi::getCurrentTime() > comboStart + comboDisplayRefresh ){
             FubiCore* core = FubiCore::getInstance();
             if (core)
                 core->setCurrentGesture("",userID);
         }
 	}
-//
+    
+    /*if(!recognized)
+     {
+     //if no combination recognized, update the position
+     comboStart = Fubi::getCurrentTime();
+     
+     MessageToSend positionMsg = mapping->getOSCPositionMessage(user);
+     oscpkt::Message oscPositionMsg;
+     oscPositionMsg.init(positionMsg.text);
+     
+     for(unsigned int i=0; i<positionMsg.values.size(); i++)
+     {
+     oscPositionMsg.pushFloat(positionMsg.values[i]);
+     }
+     pw.startBundle().addMessage(oscPositionMsg).endBundle();
+     sock.sendPacket(pw.packetData(), pw.packetSize());
+     oscPositionMsg.clear();
+     if(displayOSCMessages)
+     {
+     std::cout << "sendind OSC message: \"" << positionMsg.text;
+     for(unsigned int i=0; i<positionMsg.values.size(); i++)
+     std::cout << " " << positionMsg.values[i];
+     std::cout << " " << comboStart;
+     std::cout << std::endl;
+     }
+     }*/
+    
+    //
 }
 
 //
@@ -134,7 +163,7 @@ void checkTrackingState(std::deque<unsigned int> usersIDs)
 	unsigned int userID;
 	oscpkt::PacketWriter pw;
     std::ostringstream message;
-
+    
 	for(unsigned int i=0; i<usersIDs.size(); i++)
 	{
 		userID = usersIDs[i];
@@ -175,10 +204,10 @@ void glutDisplay (void)
 		release();
 		exit (0);
 	}
-
-	// Update the sensor	
+    
+	// Update the sensor
 	updateSensor();
-
+    
 	ImageType::Type type = ImageType::Depth;
 	ImageNumChannels::Channel numChannels = ImageNumChannels::C4;
 	unsigned char* buffer = g_depthData;
@@ -203,19 +232,19 @@ void glutDisplay (void)
 		mod = DepthImageModification::ConvertToRGB;
 	else if (g_showInfo == 3)
 		mod = DepthImageModification::StretchValueRange;
-
+    
 	getImage(buffer, type, numChannels, ImageDepth::D8, options, mod);
-
+    
 	// Clear the OpenGL buffers
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+    
 	// Setup the OpenGL viewpoint
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
 	glOrtho(0, (double)dWidth, (double)dHeight, 0, -1.0, 1.0);
-
-
+    
+    
 	// Create the OpenGL texture map
 	glEnable(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
@@ -227,14 +256,14 @@ void glutDisplay (void)
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, irWidth, irHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, g_irData);
 	else
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dWidth, dHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, g_depthData);
-
+    
 	// Display the OpenGL texture map
 	if(displayImage)
 	{
 		glColor4f(1,1,1,1);
-
+        
 		glBegin(GL_QUADS);
-
+        
 		// upper left
 		glTexCoord2f(0, 0);
 		glVertex2f(0, 0);
@@ -247,11 +276,11 @@ void glutDisplay (void)
 		// bottom left
 		glTexCoord2f(0, 1.0f);
 		glVertex2f(0, (float)dHeight);
-
+        
 		glEnd();
 		glDisable(GL_TEXTURE_2D);
 	}
-//
+    //
 	// Check users tracking state for 'nbUsersTracked'
 	std::deque<unsigned int> usersIDs = getClosestUserIDs(nbUsersTracked);
 	if(usersIDs.size()>0)
@@ -261,7 +290,7 @@ void glutDisplay (void)
     {
         // Check gestures of nbUsersTracked closest users
         for(int i=0; i<usersIDs.size(); i++)
-        {   
+        {
             if(trackingStates[usersIDs[i]] && checkCombinations)
                 checkPostures(usersIDs[i]);
         }
@@ -276,7 +305,7 @@ void glutDisplay (void)
                 checkPostures(closestID);
         }
     }
-//
+    //
 	// Swap the OpenGL display buffers
 	glutSwapBuffers();
 }
@@ -287,40 +316,40 @@ void glutKeyboard (unsigned char key, int x, int y)
 	//printf("key: %d\n", key);
 	switch (key)
 	{
-	case 27: //ESC
-		g_exitNextFrame = true;
-		break;
-	case 'm':
-		displayOSCMessages = !displayOSCMessages;
-		std::cout << "display OSC Message: " << displayOSCMessages << std::endl;
-		break;
-	case 'i':
-		displayImage = !displayImage;
-		std::cout << "display Image " << displayImage << std::endl;
-		break;
-	case 'k':
-		checkCombinations = !checkCombinations;
-		std::cout << "check Combinations: " << checkCombinations << std::endl;
-		break;
-	case 'l':
-		sendOSCCombinations = !sendOSCCombinations;
-		std::cout << "send OSC Combinations: " << sendOSCCombinations << std::endl;
-		break;
-    case 'n':
-        multiUserMode = !multiUserMode;
-        std::cout << "multi user mode: " << multiUserMode << std::endl;
-        break;
-	case 'r':
+        case 27: //ESC
+            g_exitNextFrame = true;
+            break;
+        case 'm':
+            displayOSCMessages = !displayOSCMessages;
+            std::cout << "display OSC Message: " << displayOSCMessages << std::endl;
+            break;
+        case 'i':
+            displayImage = !displayImage;
+            std::cout << "display Image " << displayImage << std::endl;
+            break;
+        case 'k':
+            checkCombinations = !checkCombinations;
+            std::cout << "check Combinations: " << checkCombinations << std::endl;
+            break;
+        case 'l':
+            sendOSCCombinations = !sendOSCCombinations;
+            std::cout << "send OSC Combinations: " << sendOSCCombinations << std::endl;
+            break;
+        case 'n':
+            multiUserMode = !multiUserMode;
+            std::cout << "multi user mode: " << multiUserMode << std::endl;
+            break;
+        case 'r':
 		{
 			g_showRGBImage = !g_showRGBImage;
 		}
-		break;
-	case 't':
+            break;
+        case 't':
 		{
 			g_showInfo = (g_showInfo+1) % 4;
 		}
-		break;
-	case 's':
+            break;
+        case 's':
 		{
 			SensorType::Type type = Fubi::getCurrentSensorType();
 			bool succes = false;
@@ -334,20 +363,20 @@ void glutKeyboard (unsigned char key, int x, int y)
 					type = SensorType::KINECTSDK;
 				else if (type == SensorType::KINECTSDK)
 					type = SensorType::NONE;
-			
+                
 				succes = Fubi::switchSensor(SensorOptions(StreamOptions(), StreamOptions(), StreamOptions(-1, -1, -1), type));
 				if (type == SensorType::NONE)
 					break;	// None should always be succesful so we ensure termination of this loop
 			}
 		}
-		break;
-	case 9: //TAB
+            break;
+        case 9: //TAB
 		{
 			// Reload recognizers from xml
 			clearUserDefinedRecognizers();
-//			
+            //
 			if (loadRecognizersFromXML(recognizersFile.c_str()))
-			{		
+			{
                 std::cout << "Succesfully reloaded ";
 				//combinationsJoints = getCombinations();
 			}
@@ -355,46 +384,46 @@ void glutKeyboard (unsigned char key, int x, int y)
                 std::cout << "Couldn't reload ";
             
             std::cout << "recognizers from xml file " << recognizersFile << std::endl;
-//
+            //
 		}
 	}
 }
 
 int main(int argc, char ** argv)
 {
-// Initialize UDP socket for OSC
+    // Initialize UDP socket for OSC
 	sock.connectTo(host, OSC_PORT);
 	if (!sock.isOk()) {
 		std::cerr << "Error connection to port " << OSC_PORT << ": " << sock.errorMessage() << "\n";
 	} else {
 		std::cout << "Client started, will send packets to port " << OSC_PORT << std::endl;
 	}
-
-// Initialize tracking states for 16 users
+    
+    // Initialize tracking states for 16 users
 	for(int i=0; i<16; i++)
 		trackingStates[i] = false;
 	
 	mapping = new MappingMashtaCycle();
-//	
-
+    //
+    
 	// Alternative init without xml
 	init(SensorOptions(StreamOptions(), StreamOptions(-1, -1, -1), StreamOptions(-1, -1, -1)));
-
+    
 	getDepthResolution(dWidth, dHeight);
 	getRgbResolution(rgbWidth, rgbHeight);
 	getIRResolution(irWidth, irHeight);
-
+    
 	g_depthData = new unsigned char[dWidth*dHeight*4];
 	if ( rgbWidth > 0 && rgbHeight > 0)
 		g_rgbData = new unsigned char[rgbWidth*rgbHeight*3];
 	if (irWidth > 0 && irHeight > 0)
 		g_irData = new unsigned char[irWidth*irHeight*4];
-
+    
 	memset(g_currentPostures, 0, sizeof(g_currentPostures));
-
+    
 	// All known combination recognizers will be started automatically for new users
 	setAutoStartCombinationRecognition(true);
-//
+    //
     
 #if defined(__APPLE__) && !defined(USE_DEBUG)
     std::string appPath(argv[0]);
@@ -403,43 +432,43 @@ int main(int argc, char ** argv)
     std::string appName = appPath.substr(0,appNamePos + suffix.size());
     recognizersFile = appName + std::string("/Contents/MacOS/") + recognizersFile;
 #endif
-
+    
     bool recognizersLoaded = loadRecognizersFromXML(recognizersFile.c_str());
     if(recognizersLoaded)
         std::cout << "Loaded ";
     else
         std::cout << "Couldn't load ";
     std::cout << "the recognizers from xml file " << recognizersFile << std::endl;
-
+    
 	//combinationsJoints = getCombinations();
-//
-	#if defined ( WIN32 ) || defined( _WINDOWS )
-		SetWindowPos( GetConsoleWindow(), HWND_TOP, dWidth+10, 0, 0, 0,
-                         SWP_NOOWNERZORDER | SWP_NOSIZE | SWP_NOZORDER );
-	#endif
-
+    //
+#if defined ( WIN32 ) || defined( _WINDOWS )
+    SetWindowPos( GetConsoleWindow(), HWND_TOP, dWidth+10, 0, 0, 0,
+                 SWP_NOOWNERZORDER | SWP_NOSIZE | SWP_NOZORDER );
+#endif
+    
 	// OpenGL init
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitWindowSize(dWidth, dHeight);
 	glutCreateWindow ("FUBI - Recognizer OpenGL test");
 	//glutFullScreen();
-
+    
 	glutKeyboardFunc(glutKeyboard);
 	glutDisplayFunc(glutDisplay);
 	glutIdleFunc(glutIdle);
-
+    
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
-
+    
 	// Per frame code is in glutDisplay
 	glutMainLoop();
 	release();
-
+    
 	delete[] g_depthData;
 	delete[] g_rgbData;
 	delete[] g_irData;
-
+    
 	
 	return 0;
 }
