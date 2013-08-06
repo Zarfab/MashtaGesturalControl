@@ -1,7 +1,7 @@
 MashtaGesturalControl
 =====================
 
-Gestural interface to control MashtaCycle (http://www.mashtacycle.be/)through OSC protocol
+Gestural interface to control MashtaCycle (http://www.mashtacycle.be/) through OSC protocol
 OpenSoundControl (OSC) integration into the Full Body Interaction Framework (FUBI), a framework for recognizing full body gestures and postures in real time from the data of an OpenNI-applicable depth sensor, especially the Microsoft Kinect sensor.
 
 OpenNI1, OpenNI2 or MS Kinect SDK required
