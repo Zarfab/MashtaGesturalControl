@@ -8,15 +8,15 @@ using namespace Fubi;
 MappingMashtaCycle::MappingMashtaCycle(void):sceneWidth(2.0), sceneDepth(1.5), sceneDepthOffset(2.0)
 {
 	initMapping();
-    for(int i=0; i<16; i++)
-        reverbFreeze[i] = false;
+    	for(int i=0; i<16; i++)
+        	reverbFreeze[i] = false;
 }
 
 MappingMashtaCycle::MappingMashtaCycle(float sw, float sd, float sdo):sceneWidth(sw), sceneDepth(sd), sceneDepthOffset(sdo)
 {
 	initMapping();
-    for(int i=0; i<16; i++)
-        reverbFreeze[i] = false;
+    	for(int i=0; i<16; i++)
+        	reverbFreeze[i] = false;
 }
 
 
@@ -28,15 +28,15 @@ void MappingMashtaCycle::initMapping()
 {
 	mapping["RightHandPushAboveShoulder"] = LOOP;
 	mapping["ThrowingRightDown"] = STOP;
-    mapping["Jump"] = REINIT;
+    	mapping["Jump"] = REINIT;
 	mapping["RightHandNearHead"] = REVERB_FREEZE;
 	mapping["RightHandNearLeftArm"] = VOLUME;
 	mapping["BothHandsInFront"] = SPEED;
 	mapping["Angel"] = REVERB_MIX;
 	mapping["LeftHandScanning"] = PAN;
 	mapping["BothHandsDown"] = POSITION;
-    mapping["ArmsParallel"] = PAUSE_ALL;
-    mapping["ArmsCrossed"] = KILL_ALL;
+    	mapping["ArmsParallel"] = PAUSE_ALL;
+   	mapping["ArmsCrossed"] = KILL_ALL;
 }
 
 std::vector<MessageToSend> MappingMashtaCycle::getOSCMessage(FubiUser* user, std::string comboName)
@@ -66,12 +66,12 @@ std::vector<MessageToSend> MappingMashtaCycle::getOSCMessage(FubiUser* user, std
             vecmts.push_back(panMessage(user, 0));
 			break;
 		case REVERB_FREEZE:
-        {
-            MessageToSend rfmts = reverbFreezeMessage(user);
-            if(rfmts.text != "")
-                vecmts.push_back(rfmts);
+        	{
+           	 	MessageToSend rfmts = reverbFreezeMessage(user);
+            		if(rfmts.text != "")
+                		vecmts.push_back(rfmts);
 			break;
-        }
+        	}
 		case VOLUME:
 			vecmts.push_back(volumeMessage(user));
 			break;
@@ -87,10 +87,10 @@ std::vector<MessageToSend> MappingMashtaCycle::getOSCMessage(FubiUser* user, std
 		case POSITION:
 			vecmts.push_back(positionMessage(user));
 			break;
-        case PAUSE_ALL:
+        	case PAUSE_ALL:
 			vecmts.push_back(pauseAllMessage(user));
 			break;
-        case KILL_ALL:
+        	case KILL_ALL:
 			vecmts.push_back(killAllMessage(user));
 			break;
 		default:
@@ -256,8 +256,9 @@ MessageToSend MappingMashtaCycle::panMessage(FubiUser* user)
     
 	float leftHandX = user->m_currentTrackingData.jointPositions[SkeletonJoint::LEFT_HAND].m_position.x;
 	float leftShoulderX = user->m_currentTrackingData.jointPositions[SkeletonJoint::LEFT_SHOULDER].m_position.x;
+	float rightShoulderX = user->m_currentTrackingData.jointPositions[SkeletonJoint::RIGHT_SHOULDER].m_position.x;
     
-	pan = (leftHandX-leftShoulderX)/400;
+	pan = (leftHandX-leftShoulderX)/(rightShoulderX-leftShoulderX);
 	boundValue(&pan, 1, -1);
 	mts.values.push_back(pan);
     
