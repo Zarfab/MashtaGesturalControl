@@ -117,6 +117,7 @@ std::vector<MessageToSend> MappingMashtaCycle::getOSCMessage(FubiUser* user, std
 			{
 				vecmts.push_back(volumeMessage(user));
 				vecmts.push_back(reverbMixMessage(user));
+			}
 			break;
 		case SPEED:
 			vecmts.push_back(speedMessage(user));
