@@ -39,9 +39,6 @@ unsigned char* g_irData = 0x0;
 
 int dWidth= 0, dHeight= 0, rgbWidth= 0, rgbHeight= 0, irWidth = 0, irHeight = 0;
 
-bool g_showRGBImage = false;
-bool g_showIRImage = false;
-
 bool displayImage = true;
 bool displayOSCMessages = true;
 bool checkCombinations = true;
@@ -61,7 +58,10 @@ bool g_exitNextFrame = false;
 bool trackingStates[16];
 const int nbUsersTracked = 4;
 
-std::string recognizersFile("MashtaCycleRecognizersNew.xml");
+bool perfMode = true;
+std::string perfRecognizersFile("MashtaCycleRecognizersPerf.xml");
+std::string installRecognizersFile("MashtaCycleRecognizersInstall.xml");
+std::string currentRecognizersFile;
 
 /////////// OSC defines
 #define OSCPKT_OSTREAM_OUTPUT
@@ -190,6 +190,21 @@ void checkTrackingState(std::deque<unsigned int> usersIDs)
 	}
 }
 
+void reloadRecognizersFromXML(std::string XMLFile)
+{
+    clearUserDefinedRecognizers();
+    //
+    if (loadRecognizersFromXML(XMLFile.c_str()))
+    {
+        std::cout << "Succesfully reloaded ";
+        //combinationsJoints = getCombinations();
+    }
+    else
+        std::cout << "Couldn't reload ";
+
+    std::cout << "recognizers from xml file " << XMLFile << std::endl;
+}
+
 void glutIdle (void)
 {
 	// Display the frame
@@ -211,17 +226,7 @@ void glutDisplay (void)
 	ImageType::Type type = ImageType::Depth;
 	ImageNumChannels::Channel numChannels = ImageNumChannels::C4;
 	unsigned char* buffer = g_depthData;
-	if (g_showRGBImage)
-	{
-		buffer = g_rgbData;
-		type = ImageType::Color;
-		numChannels = ImageNumChannels::C3;
-	}
-	else if (g_showIRImage)
-	{
-		buffer = g_irData;
-		type = ImageType::IR;
-	}
+
 	unsigned int options = RenderOptions::None;
 	DepthImageModification::Modification mod = DepthImageModification::UseHistogram;
 	if (g_showInfo == 0)
@@ -250,12 +255,7 @@ void glutDisplay (void)
 	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	if (g_showRGBImage)
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, rgbWidth, rgbHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, g_rgbData);
-	else if (g_showIRImage)
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, irWidth, irHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, g_irData);
-	else
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dWidth, dHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, g_depthData);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dWidth, dHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, g_depthData);
     
 	// Display the OpenGL texture map
 	if(displayImage)
@@ -339,15 +339,20 @@ void glutKeyboard (unsigned char key, int x, int y)
             multiUserMode = !multiUserMode;
             std::cout << "multi user mode: " << multiUserMode << std::endl;
             break;
-        case 'r':
-		{
-			g_showRGBImage = !g_showRGBImage;
-		}
+        case 'p':
+        {
+            perfMode = !perfMode;
+            if(perfMode)
+                currentRecognizersFile = perfRecognizersFile;
+            else
+                currentRecognizersFile = installRecognizersFile;
+            reloadRecognizersFromXML(currentRecognizersFile);
+            mapping->changeMode(perfMode);
+        }
             break;
+
         case 't':
-		{
 			g_showInfo = (g_showInfo+1) % 4;
-		}
             break;
         case 's':
 		{
@@ -373,17 +378,7 @@ void glutKeyboard (unsigned char key, int x, int y)
         case 9: //TAB
 		{
 			// Reload recognizers from xml
-			clearUserDefinedRecognizers();
-            //
-			if (loadRecognizersFromXML(recognizersFile.c_str()))
-			{
-                std::cout << "Succesfully reloaded ";
-				//combinationsJoints = getCombinations();
-			}
-            else
-                std::cout << "Couldn't reload ";
-            
-            std::cout << "recognizers from xml file " << recognizersFile << std::endl;
+                reloadRecognizersFromXML(currentRecognizersFile.c_str());
             //
 		}
 	}
@@ -403,7 +398,17 @@ int main(int argc, char ** argv)
 	for(int i=0; i<16; i++)
 		trackingStates[i] = false;
 	
-	mapping = new MappingMashtaCycle();
+    mapping = new MappingMashtaCycle();
+    if(perfMode)
+    {
+        mapping->changeMode(true);
+        currentRecognizersFile = perfRecognizersFile;
+    }
+    else
+    {
+        mapping->changeMode(false);
+        currentRecognizersFile = installRecognizersFile;
+    }
     //
     
 	// Alternative init without xml
@@ -433,12 +438,12 @@ int main(int argc, char ** argv)
     recognizersFile = appName + std::string("/Contents/MacOS/") + recognizersFile;
 #endif
     
-    bool recognizersLoaded = loadRecognizersFromXML(recognizersFile.c_str());
+    bool recognizersLoaded = loadRecognizersFromXML(currentRecognizersFile.c_str());
     if(recognizersLoaded)
         std::cout << "Loaded ";
     else
         std::cout << "Couldn't load ";
-    std::cout << "the recognizers from xml file " << recognizersFile << std::endl;
+    std::cout << "the recognizers from xml file " << currentRecognizersFile << std::endl;
     
 	//combinationsJoints = getCombinations();
     //
