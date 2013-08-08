@@ -53,6 +53,7 @@ private:
     MessageToSend speedMessage(FubiUser* user);
     MessageToSend speedMessage(FubiUser* user, float defaultValue);
     MessageToSend reverbMixMessage(FubiUser* user);
+    MessageToSend reverbDampingMessage(FubiUser* user);
     MessageToSend panMessage(FubiUser* user);
     MessageToSend panMessage(FubiUser* user, float defaultValue);
     MessageToSend positionMessage(FubiUser* user);
