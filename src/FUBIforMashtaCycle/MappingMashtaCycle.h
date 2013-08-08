@@ -36,25 +36,31 @@ public:
 	~MappingMashtaCycle(void);
 	std::vector<MessageToSend> getOSCMessage(FubiUser* user, std::string comboName);
     MessageToSend getOSCPositionMessage(FubiUser* user);
-	void initMapping();
+    void changeMode(bool newMode);
+    void newSceneSize(float sw, float sd, float sdo);
+
 	
 private:
-	int boundValue(float *value, float up, float low);
-	MessageToSend loopMessage(FubiUser* user);
-	MessageToSend stopMessage(FubiUser* user);
-	MessageToSend reverbFreezeMessage(FubiUser* user);
-	MessageToSend volumeMessage(FubiUser* user);
-	MessageToSend volumeMessage(FubiUser* user, float defaultValue);
-	MessageToSend speedMessage(FubiUser* user);
+    int boundValue(float *value, float up, float low);
+    void initPerfMapping();
+    void initInstallMapping();
+
+    MessageToSend loopMessage(FubiUser* user);
+    MessageToSend stopMessage(FubiUser* user);
+    MessageToSend reverbFreezeMessage(FubiUser* user);
+    MessageToSend volumeMessage(FubiUser* user);
+    MessageToSend volumeMessage(FubiUser* user, float defaultValue);
+    MessageToSend speedMessage(FubiUser* user);
     MessageToSend speedMessage(FubiUser* user, float defaultValue);
-	MessageToSend reverbMixMessage(FubiUser* user);
-	MessageToSend panMessage(FubiUser* user);
+    MessageToSend reverbMixMessage(FubiUser* user);
+    MessageToSend panMessage(FubiUser* user);
     MessageToSend panMessage(FubiUser* user, float defaultValue);
-	MessageToSend positionMessage(FubiUser* user);
+    MessageToSend positionMessage(FubiUser* user);
     MessageToSend pauseAllMessage(FubiUser* user);
     MessageToSend killAllMessage(FubiUser* user);
-    
+
 	bool reverbFreeze[16];
+    bool perfMode; // true for performance mode, false for installation mode
 	float sceneWidth, sceneDepth, sceneDepthOffset;
     
 	std::map<std::string, MashtaSoundControl> mapping;
