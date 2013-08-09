@@ -54,14 +54,14 @@ void MappingMashtaCycle::initPerfMapping()
 {
 	mapping["RightHandPushAboveShoulder"] = LOOP;
 	mapping["ThrowingRightDown"] = STOP;
-    mapping["Jump"] = REINIT;
+    	mapping["Jump"] = REINIT;
 	mapping["RightHandNearHead"] = REVERB_FREEZE;
 	mapping["RightHandNearLeftArm"] = VOLUME;
 	mapping["BothHandsInFront"] = SPEED;
 	mapping["Angel"] = REVERB_MIX;
 	mapping["LeftHandScanning"] = PAN;
 	mapping["BothHandsDown"] = POSITION;
-    mapping["ArmsParallel"] = PAUSE_ALL;
+    	mapping["ArmsParallel"] = PAUSE_ALL;
    	mapping["ArmsCrossed"] = KILL_ALL;
 }
 
@@ -170,9 +170,9 @@ int MappingMashtaCycle::boundValue(float *value, float up, float low)
 
 MessageToSend MappingMashtaCycle::loopMessage(FubiUser* user)
 {
-    MessageToSend mts;
-    std::ostringstream mes;
-    mes << "/mediacycle/pointer/" << user->m_id << "/loop";
+    	MessageToSend mts;
+    	std::ostringstream mes;
+    	mes << "/mediacycle/pointer/" << user->m_id << "/loop";
 	mts.text = mes.str();
 	return mts;
 }
@@ -180,19 +180,19 @@ MessageToSend MappingMashtaCycle::loopMessage(FubiUser* user)
 MessageToSend MappingMashtaCycle::stopMessage(FubiUser* user)
 {
 	MessageToSend mts;
-    std::ostringstream mes;
+    	std::ostringstream mes;
 	mes << "/mediacycle/pointer/" << user->m_id << "/mute";
-    mts.text = mes.str();
+    	mts.text = mes.str();
 	return mts;
 }
 
 MessageToSend MappingMashtaCycle::reverbFreezeMessage(FubiUser* user)
 {
 	MessageToSend mts;
-    std::ostringstream mes;
+    	std::ostringstream mes;
 	mes << "/mediacycle/pointer/" << user->m_id << "/reverb_freeze";
-    mts.text = "";
-    if(!reverbFreeze[user->m_id])
+    	mts.text = "";
+    	if(!reverbFreeze[user->m_id])
 	{
 		reverbFreeze[user->m_id] = true;
         mts.text = mes.str();
@@ -202,14 +202,16 @@ MessageToSend MappingMashtaCycle::reverbFreezeMessage(FubiUser* user)
 }
 
 
-const float propMin = 0.67; //proportion of distance head-torso on which the reverb mix is 0
-const float propMax =2.0; //proportion of distance head-torso on which the reverb mix is 1
+const float propMinY = 0.67; //proportion of distance head-torso on which the reverb mix is 0
+const float propMaxY =2.0; //proportion of distance head-torso on which the reverb mix is 1
+const float propMinX = 1; //proportion of distance head-torso on which the reverb mix is 0
+const float propMaxX =3.0; //proportion of distance head-torso on which the reverb mix is 1
 MessageToSend MappingMashtaCycle::volumeMessage(FubiUser* user)
 {
 	MessageToSend mts;
-    std::ostringstream mes;
+    	std::ostringstream mes;
 	mes << "/mediacycle/pointer/" << user->m_id << "/playback_volume";
-    mts.text = mes.str();
+    	mts.text = mes.str();
 	float volume;
     
 	if(perfMode)
@@ -222,14 +224,14 @@ MessageToSend MappingMashtaCycle::volumeMessage(FubiUser* user)
 	}
 	else
 	{
-		float rightHandY = user->m_currentTrackingData.jointPositions[SkeletonJoint::LEFT_HAND].m_position.y;
+		float rightHandY = user->m_currentTrackingData.jointPositions[SkeletonJoint::RIGHT_HAND].m_position.y;
 		float headY = user->m_currentTrackingData.jointPositions[SkeletonJoint::HEAD].m_position.y;
 		float torsoY = user->m_currentTrackingData.jointPositions[SkeletonJoint::TORSO].m_position.y;
 		
 		float distnorm = (rightHandY-torsoY)/(headY-torsoY);
-		float a = 1/(propMax-propMin);
+		float a = 1/(propMaxY-propMinY);
 		
-		volume = a*(distnorm-propMin);
+		volume = a*(distnorm-propMinY);
 	}
 	boundValue(&volume, 1, 0);
 	mts.values.push_back(volume);
@@ -240,19 +242,20 @@ MessageToSend MappingMashtaCycle::volumeMessage(FubiUser* user)
 MessageToSend MappingMashtaCycle::reverbMixMessage(FubiUser* user)
 {
 	MessageToSend mts;
-    std::ostringstream mes;
+    	std::ostringstream mes;
 	mes << "/mediacycle/pointer/" << user->m_id << "/reverb_mix";
-    mts.text = mes.str();
+    	mts.text = mes.str();
 	float reverbMix;
     
+	float rightHandX = user->m_currentTrackingData.jointPositions[SkeletonJoint::RIGHT_HAND].m_position.x;
 	float rightHandX = user->m_currentTrackingData.jointPositions[SkeletonJoint::LEFT_HAND].m_position.x;
-	float headX = user->m_currentTrackingData.jointPositions[SkeletonJoint::HEAD].m_position.x;
-	float torsoX = user->m_currentTrackingData.jointPositions[SkeletonJoint::TORSO].m_position.x;
+	float rightShoulderX = user->m_currentTrackingData.jointPositions[SkeletonJoint::RIGHT_SHOULDER].m_position.x;
+	float leftShoulderX = user->m_currentTrackingData.jointPositions[SkeletonJoint::LEFT_SHOULDER].m_position.x;
 		
-	float distnorm = (rightHandX-torsoX)/(headX-torsoX);
-	float a = 1/(propMax-propMin);
+	float distnorm = (rightHandX-leftHandX)/(rightShoulderX-leftShoulderX);
+	float a = 1/(propMaxX-propMinX);
     
-	reverbMix = a*(distnorm-propMin); //0 if distnorm < 0,67*head-torso, 1 if distnorm > 2*head-torso
+	reverbMix = a*(distnorm-propMinX); //0 if distnorm < 0,67*head-torso, 1 if distnorm > 2*head-torso
 	boundValue(&reverbMix, 1, 0);
 	mts.values.push_back(reverbMix);
     
@@ -262,20 +265,20 @@ MessageToSend MappingMashtaCycle::reverbMixMessage(FubiUser* user)
 MessageToSend MappingMashtaCycle::reverbDampingMessage(FubiUser* user)
 {
 	MessageToSend mts;
-    std::ostringstream mes;
+    	std::ostringstream mes;
 	mes << "/mediacycle/pointer/" << user->m_id << "/reverb_damping";
-    mts.text = mes.str();
+    	mts.text = mes.str();
 	float reverbDamp;
-    if(perfMode)
+    	if(perfMode)
 	{
-		float rightHandY = user->m_currentTrackingData.jointPositions[SkeletonJoint::LEFT_HAND].m_position.y;
+		float rightHandY = user->m_currentTrackingData.jointPositions[SkeletonJoint::RIGHT_HAND].m_position.y;
 		float headY = user->m_currentTrackingData.jointPositions[SkeletonJoint::HEAD].m_position.y;
 		float torsoY = user->m_currentTrackingData.jointPositions[SkeletonJoint::TORSO].m_position.y;
 		
 		float distnorm = (rightHandY-torsoY)/(headY-torsoY);
-		float a = 1/(propMax-propMin);
+		float a = 1/(propMaxY-propMinY);
 		
-		reverbDamp = a*(distnorm-propMin);
+		reverbDamp = a*(distnorm-propMinY);
 	}
     
 	boundValue(&reverbDamp, 1, 0);
@@ -287,9 +290,9 @@ MessageToSend MappingMashtaCycle::reverbDampingMessage(FubiUser* user)
 MessageToSend MappingMashtaCycle::volumeMessage(FubiUser* user, float defaultValue)
 {
 	MessageToSend mts;
-    std::ostringstream mes;
+    	std::ostringstream mes;
 	mes << "/mediacycle/pointer/" << user->m_id << "/playback_volume";
-    mts.text = mes.str();
+    	mts.text = mes.str();
 	float volume = defaultValue;
 	boundValue(&volume, 1, 0);
 	mts.values.push_back(volume);
@@ -300,9 +303,9 @@ MessageToSend MappingMashtaCycle::volumeMessage(FubiUser* user, float defaultVal
 MessageToSend MappingMashtaCycle::speedMessage(FubiUser* user)
 {
 	MessageToSend mts;
-    std::ostringstream mes;
+    	std::ostringstream mes;
 	mes << "/mediacycle/pointer/" << user->m_id << "/playback_speed";
-    mts.text = mes.str();
+    	mts.text = mes.str();
 	float speed;
     
 	float leftHandY = user->m_currentTrackingData.jointPositions[SkeletonJoint::LEFT_HAND].m_position.y;
@@ -318,9 +321,9 @@ MessageToSend MappingMashtaCycle::speedMessage(FubiUser* user)
 MessageToSend MappingMashtaCycle::speedMessage(FubiUser* user, float defaultValue)
 {
 	MessageToSend mts;
-    std::ostringstream mes;
+    	std::ostringstream mes;
 	mes << "/mediacycle/pointer/" << user->m_id << "/playback_speed";
-    mts.text = mes.str();
+    	mts.text = mes.str();
 	float speed = defaultValue;
 	boundValue(&speed, 5, -3);
 	mts.values.push_back(speed);
@@ -331,9 +334,9 @@ MessageToSend MappingMashtaCycle::speedMessage(FubiUser* user, float defaultValu
 MessageToSend MappingMashtaCycle::panMessage(FubiUser* user)
 {
 	MessageToSend mts;
-    std::ostringstream mes;
+    	std::ostringstream mes;
 	mes << "/mediacycle/pointer/" << user->m_id << "/playback_pan";
-    mts.text = mes.str();
+    	mts.text = mes.str();
 	float pan;
     
 	float leftHandX = user->m_currentTrackingData.jointPositions[SkeletonJoint::LEFT_HAND].m_position.x;
@@ -350,9 +353,9 @@ MessageToSend MappingMashtaCycle::panMessage(FubiUser* user)
 MessageToSend MappingMashtaCycle::panMessage(FubiUser* user, float defaultValue)
 {
 	MessageToSend mts;
-    std::ostringstream mes;
+    	std::ostringstream mes;
 	mes << "/mediacycle/pointer/" << user->m_id << "/playback_pan";
-    mts.text = mes.str();
+    	mts.text = mes.str();
 	float pan = defaultValue;
 	boundValue(&pan, 1, -1);
 	mts.values.push_back(pan);
@@ -363,7 +366,7 @@ MessageToSend MappingMashtaCycle::panMessage(FubiUser* user, float defaultValue)
 MessageToSend MappingMashtaCycle::positionMessage(FubiUser* user)
 {
 	MessageToSend mts;
-    std::ostringstream mes;
+    	std::ostringstream mes;
     
 	if(reverbFreeze[user->m_id] && perfMode)
 	{
@@ -394,18 +397,18 @@ MessageToSend MappingMashtaCycle::positionMessage(FubiUser* user)
 
 MessageToSend MappingMashtaCycle::pauseAllMessage(FubiUser* user)
 {
-    MessageToSend mts;
-    std::ostringstream mes;
-    mes << "/mediacycle/pointer/" << user->m_id << "/pause_all";
+    	MessageToSend mts;
+    	std::ostringstream mes;
+    	mes << "/mediacycle/pointer/" << user->m_id << "/pause_all";
 	mts.text = mes.str();
 	return mts;
 }
 
 MessageToSend MappingMashtaCycle::killAllMessage(FubiUser* user)
 {
-    MessageToSend mts;
-    std::ostringstream mes;
-    mes << "/mediacycle/pointer/" << user->m_id << "/kill_all";
+    	MessageToSend mts;
+    	std::ostringstream mes;
+    	mes << "/mediacycle/pointer/" << user->m_id << "/kill_all";
 	mts.text = mes.str();
 	return mts;
 }
