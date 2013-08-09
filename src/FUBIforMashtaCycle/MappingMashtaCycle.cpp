@@ -202,10 +202,10 @@ MessageToSend MappingMashtaCycle::reverbFreezeMessage(FubiUser* user)
 }
 
 
-const float propMinY = 0.67; //proportion of distance head-torso on which the reverb mix is 0
-const float propMaxY =2.0; //proportion of distance head-torso on which the reverb mix is 1
-const float propMinX = 1; //proportion of distance head-torso on which the reverb mix is 0
-const float propMaxX =3.0; //proportion of distance head-torso on which the reverb mix is 1
+const float propMinY = 0.67; //proportion of distance head-torso on which the reverb damping or volume is 0
+const float propMaxY =1.8; //proportion of distance head-torso on which the reverb damping or volume is 1
+const float propMinX = 1; //proportion of distance between shoulders on which the reverb mix is 0
+const float propMaxX =3.0; //proportion of distance between shoulders on which the reverb mix is 1
 MessageToSend MappingMashtaCycle::volumeMessage(FubiUser* user)
 {
 	MessageToSend mts;
