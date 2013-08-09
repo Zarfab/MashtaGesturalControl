@@ -248,7 +248,7 @@ MessageToSend MappingMashtaCycle::reverbMixMessage(FubiUser* user)
 	float reverbMix;
     
 	float rightHandX = user->m_currentTrackingData.jointPositions[SkeletonJoint::RIGHT_HAND].m_position.x;
-	float rightHandX = user->m_currentTrackingData.jointPositions[SkeletonJoint::LEFT_HAND].m_position.x;
+	float leftHandX = user->m_currentTrackingData.jointPositions[SkeletonJoint::LEFT_HAND].m_position.x;
 	float rightShoulderX = user->m_currentTrackingData.jointPositions[SkeletonJoint::RIGHT_SHOULDER].m_position.x;
 	float leftShoulderX = user->m_currentTrackingData.jointPositions[SkeletonJoint::LEFT_SHOULDER].m_position.x;
 		
