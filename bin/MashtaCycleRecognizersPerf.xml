@@ -240,12 +240,10 @@
       <Recognizer name ="rightHandMovesForward"/>
       <NotRecognizer name="rightHandNearHead"/>
       <NotRecognizer name="handsCrossed"/>
-      <Recognizer name="leftHandDown"/>
     </State>
     <State minDuration="0.2" maxDuration="1.8" timeForTransition="0.2">
       <Recognizer name="rightHandAboveShoulder"/>
       <Recognizer name="rightHandInFront"/>
-      <Recognizer name="rightHandStable"/>
       <NotRecognizer name="handsCrossed"/>
     </State>
     <State minDuration="0.2">
@@ -253,7 +251,6 @@
       <Recognizer name="rightHandMovesBackward"/>
 	    <NotRecognizer name="rightHandNearHead"/>
       <NotRecognizer name="handsCrossed"/>
-      <Recognizer name="leftHandDown"/>
     </State>
   </CombinationRecognizer>
 
@@ -320,6 +317,7 @@
       <Recognizer name="handsInSameHeight"/>
       <NotRecognizer name="rightElbowInShoulderHeight"/>
       <NotRecognizer name="leftElbowInShoulderHeight"/>
+        <NotRecognizer name="leftArmVertical"/>
     </State>
   </CombinationRecognizer>
 
