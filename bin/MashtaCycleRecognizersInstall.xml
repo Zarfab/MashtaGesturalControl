@@ -113,6 +113,12 @@
     <MaxDegrees z="30"/>
     <MinDegrees z="-30"/>
   </JointOrientationRecognizer>
+
+    <JointOrientationRecognizer name="leftArmVertical" visibility="hidden" useLocalOrientations="false">
+        <Joint name="leftElbow"/>
+        <MinDegrees x="-40" y="-180" z="-110"/>
+        <MaxDegrees x="0" y="-140" z="-70"/>
+    </JointOrientationRecognizer>
   
   <!-- Linear movement recognizers -->
   <LinearMovementRecognizer name="headMovesUp" visibility="hidden">
@@ -181,16 +187,6 @@
     </State>
   </CombinationRecognizer>
 
-  <!-- arms crossed - kill all -->
-  <CombinationRecognizer name="ArmsCrossed">
-    <State minDuration="0.5" maxDuration="2" maxInterruptionTime="0.15">
-      <Recognizer name="handsCrossed"/>
-      <Recognizer name="handsInSameHeight"/>
-      <Recognizer name="leftArmOblique" ignoreOnTrackingError="true"/>
-      <NotRecognizer name="rightHandInFront"/>
-    </State>
-  </CombinationRecognizer>
-
   <!-- Both hands moving up from the sides - volume and reverb levels-->
   <CombinationRecognizer name="Angel">
     <State minDuration="0.0" maxDuration="0.05">
@@ -201,6 +197,7 @@
       <Recognizer name="handsInSameHeight"/>
       <NotRecognizer name="rightElbowInShoulderHeight"/>
       <NotRecognizer name="leftElbowInShoulderHeight"/>
+        <NotRecognizer name="leftArmVertical"/>
     </State>
   </CombinationRecognizer>
 
